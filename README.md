@@ -1,2 +1,3 @@
-# nnmf
-Non-negative Matrix Factorization
+# Non-negative Matrix Factorization
+
+This package is a work in progress :)
