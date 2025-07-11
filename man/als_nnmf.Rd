@@ -17,7 +17,8 @@ als_nnmf(
   L2 = c(0, 0),
   ortho = c(0, 0),
   log = NULL,
-  num_threads = 0
+  num_threads = 0,
+  fast_nnls = FALSE
 )
 }
 \arguments{

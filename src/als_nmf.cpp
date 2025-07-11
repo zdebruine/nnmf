@@ -16,7 +16,7 @@ inline void predict(const Eigen::MatrixXf& A, const Eigen::MatrixXf& X_fixed,
   Eigen::MatrixXf AtA = XXt(X_fixed);
   // Pure off-diagonal orthogonality regulariser
   if (ortho_lambda != 0.0f) {
-    // shrink off-diagonal elements of AtA by multiplying by ortho_lambda
+    // shrink off-diagonal elements of AtA by multiplying to ortho_lambda
     AtA += AtA * ortho_lambda;
     AtA.diagonal().setOnes();
   }
@@ -56,7 +56,6 @@ Rcpp::List cpp_als_nnmf(Eigen::MatrixXf A,
 
   float conv = 1.0f;
   for (uint16_t iter = 0; iter < epochs && conv > tol; ++iter) {
-    logger.next_epoch();
 
     Eigen::MatrixXf w_prev = w;
     Eigen::MatrixXf h_prev = h;
@@ -83,11 +82,20 @@ Rcpp::List cpp_als_nnmf(Eigen::MatrixXf A,
     logger.push("ortho_h", ortho_h);
     logger.push("loss", loss);
     logger.push("conv", conv);
+    logger.push("sparsity_w", sparsity(w));
+    logger.push("sparsity_h", sparsity(h));
+    logger.push("L1_w", (float)L1[0]);
+    logger.push("L2_w", (float)L2[0]);
+    logger.push("L1_h", (float)L1[1]);
+    logger.push("L2_h", (float)L2[1]);
+    logger.push("ortho_w", (float)ortho[0]);
+    logger.push("ortho_h", (float)ortho[1]);
 
     if (verbose) {
       Rprintf("iter %d | tol %.6f | mse %.6f | ortho_w %.6f | ortho_h %.6f | loss %.6f\n",
               iter + 1, conv, mse_val, ortho_w, ortho_h, loss);
     }
+    logger.next_epoch();
     Rcpp::checkUserInterrupt();
   }
 

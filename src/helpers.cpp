@@ -41,4 +41,11 @@ inline float orthogonality_loss(const Eigen::MatrixXf& X) {
   return XXt_mat.squaredNorm() / X.rows();
 }
 
+// Calculate the sparsity (fraction of zero elements) of a matrix
+inline float sparsity(const Eigen::MatrixXf& X) {
+  int total = X.size();
+  int zeros = (X.array() == 0.0f).count();
+  return static_cast<float>(zeros) / total;
+}
+
 

@@ -27,12 +27,12 @@
 #' @param ortho orthogonality penalty, optionally a vector of two giving penalty on c(W, H) individually
 #' @param log Parameters that are nearly free to compute will be automatically logged. In addition, you may specify any of c("test_loss", "train_loss")
 #' @param num_threads Number of threads to use for parallelization. If 0, will use all available threads.
-#'
+#' 
 #' @import RcppEigen
 #' @export
 #' @useDynLib nnmf, .registration = TRUE
 #'
-als_nnmf <- function(data, k, test_size = 0.0615, test_seed = 129, seed = 42, tol = 1e-4, epochs = 100, verbose = TRUE, L1 = c(0, 0), L2 = c(0, 0), ortho = c(0, 0), log = NULL, num_threads = 0) {
+als_nnmf <- function(data, k, test_size = 0.0615, test_seed = 129, seed = 42, tol = 1e-4, epochs = 100, verbose = TRUE, L1 = c(0, 0), L2 = c(0, 0), ortho = c(0, 0), log = NULL, num_threads = 0, fast_nnls = FALSE) {
 
       inv_test_density <- pmax(2, round(1 / test_size))
       if(is.matrix(seed)){
