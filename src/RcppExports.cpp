@@ -23,8 +23,28 @@ BEGIN_RCPP
 END_RCPP
 }
 
+Rcpp::List als_nmf(Eigen::MatrixXf A, const int k, const double tol,
+                   const uint16_t maxit, const bool verbose,
+                   const bool log_train_loss);
+RcppExport SEXP _nnmf_als_nmf(SEXP ASEXP, SEXP kSEXP, SEXP tolSEXP, SEXP maxitSEXP,
+                              SEXP verboseSEXP, SEXP log_train_lossSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::MatrixXf >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< const uint16_t >::type maxit(maxitSEXP);
+    Rcpp::traits::input_parameter< const bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< const bool >::type log_train_loss(log_train_lossSEXP);
+    rcpp_result_gen = Rcpp::wrap(als_nmf(A, k, tol, maxit, verbose, log_train_loss));
+    return rcpp_result_gen;
+END_RCPP
+}
+
 static const R_CallMethodDef CallEntries[] = {
     {"_nnmf_xxt", (DL_FUNC) &_nnmf_xxt, 1},
+    {"_nnmf_als_nmf", (DL_FUNC) &_nnmf_als_nmf, 6},
     {NULL, NULL, 0}
 };
 

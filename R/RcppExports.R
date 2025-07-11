@@ -5,3 +5,8 @@ xxt <- function(x) {
     .Call('_nnmf_xxt', PACKAGE = 'nnmf', x)
 }
 
+als_nmf <- function(A, k, tol = 1e-4, maxit = 100, verbose = TRUE,
+                    log_train_loss = FALSE) {
+    .Call('_nnmf_als_nmf', PACKAGE = 'nnmf', A, k, tol, maxit, verbose,
+          log_train_loss)
+}
