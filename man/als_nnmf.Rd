@@ -7,7 +7,8 @@
 als_nnmf(
   data,
   k,
-  inv_test_density = 16,
+  test_size = 0.0615,
+  test_seed = 129,
   seed = 42,
   tol = 1e-04,
   epochs = 100,
@@ -15,7 +16,8 @@ als_nnmf(
   L1 = c(0, 0),
   L2 = c(0, 0),
   ortho = c(0, 0),
-  logger = NULL
+  log = NULL,
+  num_threads = 0
 )
 }
 \arguments{
@@ -23,9 +25,11 @@ als_nnmf(
 
 \item{k}{rank}
 
-\item{inv_test_density}{Integer giving the inverse density of a random speckled test set (e.g. 16 = 6.125% of data)}
+\item{test_size}{Integer giving the proportion of values that will be reserved for the test set in a random speckled pattern. This proportion will be inverted and rounded to the nearest integer for efficient RNG purposes.}
 
-\item{seed}{A number giving the random seed, or a matrix used to initialize W of dimensions m x k}
+\item{test_seed}{Random seed determining the test set.}
+
+\item{seed}{A number giving the random seed for initializing W, or a matrix giving initial W of dimensions m x k}
 
 \item{tol}{stopping criterion giving the relative 2-norm distance between W across consecutive iterations at which to call convergence}
 
@@ -39,13 +43,15 @@ als_nnmf(
 
 \item{ortho}{orthogonality penalty, optionally a vector of two giving penalty on c(W, H) individually}
 
-\item{logger}{Parameters that are nearly free to compute will be automatically logged. In addition, you may specify any of c("test_loss", "train_loss")}
+\item{log}{Parameters that are nearly free to compute will be automatically logged. In addition, you may specify any of c("test_loss", "train_loss")}
+
+\item{num_threads}{Number of threads to use for parallelization. If 0, will use all available threads.}
 }
 \description{
 This is the classical NMF algorithm implemented in-core that requires transposition of the input data.
 }
 \details{
-Factors in W and H are normalized to their 2-norm after each iteration, and the resulting scaling factor is given in the scaling diagonal.
+Factors in W and H are normalized to their 2-norm after each iteration.
 
 The input matrix will be copied to float type on the C++ back-end. This requires additional RAM, but provides significant speedups.
 
