@@ -1,0 +1,13 @@
+Package: nnmf
+Type: Package
+Title: Non-negative Matrix Factorization
+Version: 0.0.1.0
+Author: Zach DeBruine
+Maintainer: Zach DeBruine <debruinz@gvsu.edu>
+Description: Fast implementations of interpretable NMF models for any size data, sparse or dense, with efficient hyperparameter tuning utilities and an extensive analysis toolbox.
+License: MIT
+Depends: RcppEigen
+LinkingTo: Rcpp, RcppEigen
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
