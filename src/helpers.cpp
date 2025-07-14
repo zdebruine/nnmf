@@ -1,4 +1,15 @@
-#include <RcppEigen.h>
+// Ensure type traits are available for is_sparse
+#include <type_traits>
+// Type trait to detect if a matrix is sparse (has InnerIterator)
+template<typename T>
+struct is_sparse {
+    template<typename U>
+    static std::true_type test(decltype(&U::InnerIterator));
+    template<typename>
+    static std::false_type test(...);
+    static constexpr bool value = decltype(test<T>(nullptr))::value;
+};
+#include "nnmf.h"
 
 // fast symmetric matrix multiplication, X * X.transpose()
 inline Eigen::MatrixXf XXt(const Eigen::MatrixXf& X) {
@@ -19,14 +30,17 @@ inline void scale(Eigen::MatrixXf& w, Eigen::VectorXf& d) {
 }
 
 // mean squared reconstruction error of A ~ t(W) %*% H, with 2-norm scaling
-inline float mse(const Eigen::MatrixXf& A, const Eigen::MatrixXf& W,
-                 const Eigen::MatrixXf& H, const Eigen::VectorXf& d) {
+template<typename MatType>
+inline float mse(const MatType& A, 
+                 const Eigen::MatrixXf& W,
+                 const Eigen::MatrixXf& H, 
+                 const Eigen::VectorXf& d) {
   Eigen::MatrixXf W_scaled = W;
   for (int i = 0; i < W.rows(); ++i) {
     W_scaled.row(i) *= d(i);
   }
   Eigen::MatrixXf diff = A - W_scaled.transpose() * H;
-  return diff.squaredNorm() / A.size();
+  return diff.squaredNorm() / (A.rows() * A.cols());
 }
 
 // convergence using only w and w_prev

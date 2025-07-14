@@ -1,4 +1,4 @@
-#include <Rcpp.h>
+#include "nnmf.h"
 
 class Logger {
 public:

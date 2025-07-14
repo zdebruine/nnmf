@@ -11,33 +11,58 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// cpp_als_nnmf
-Rcpp::List cpp_als_nnmf(Eigen::MatrixXf A, const int k, const uint32_t inv_test_size, const uint32_t test_seed, Eigen::MatrixXf w, const float tol, const size_t epochs, const bool verbose, Rcpp::NumericVector L1, Rcpp::NumericVector L2, Rcpp::NumericVector ortho, const bool log_train_loss, const bool log_test_loss, const int num_threads);
-RcppExport SEXP _nnmf_cpp_als_nnmf(SEXP ASEXP, SEXP kSEXP, SEXP inv_test_sizeSEXP, SEXP test_seedSEXP, SEXP wSEXP, SEXP tolSEXP, SEXP epochsSEXP, SEXP verboseSEXP, SEXP L1SEXP, SEXP L2SEXP, SEXP orthoSEXP, SEXP log_train_lossSEXP, SEXP log_test_lossSEXP, SEXP num_threadsSEXP) {
+// cpp_als_nnmf_dense
+Rcpp::List cpp_als_nnmf_dense(Eigen::MatrixXf V, int k, uint32_t inv_test_size, uint32_t test_seed, Eigen::MatrixXf W, float tol, size_t epochs, bool verbose, Rcpp::NumericVector L1, Rcpp::NumericVector L2, Rcpp::NumericVector ortho, bool log_train_loss, bool log_test_loss, int num_threads);
+RcppExport SEXP _nnmf_cpp_als_nnmf_dense(SEXP VSEXP, SEXP kSEXP, SEXP inv_test_sizeSEXP, SEXP test_seedSEXP, SEXP WSEXP, SEXP tolSEXP, SEXP epochsSEXP, SEXP verboseSEXP, SEXP L1SEXP, SEXP L2SEXP, SEXP orthoSEXP, SEXP log_train_lossSEXP, SEXP log_test_lossSEXP, SEXP num_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Eigen::MatrixXf >::type A(ASEXP);
-    Rcpp::traits::input_parameter< const int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< const uint32_t >::type inv_test_size(inv_test_sizeSEXP);
-    Rcpp::traits::input_parameter< const uint32_t >::type test_seed(test_seedSEXP);
-    Rcpp::traits::input_parameter< Eigen::MatrixXf >::type w(wSEXP);
-    Rcpp::traits::input_parameter< const float >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< const size_t >::type epochs(epochsSEXP);
-    Rcpp::traits::input_parameter< const bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< Eigen::MatrixXf >::type V(VSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type inv_test_size(inv_test_sizeSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type test_seed(test_seedSEXP);
+    Rcpp::traits::input_parameter< Eigen::MatrixXf >::type W(WSEXP);
+    Rcpp::traits::input_parameter< float >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< size_t >::type epochs(epochsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type L1(L1SEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type L2(L2SEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ortho(orthoSEXP);
-    Rcpp::traits::input_parameter< const bool >::type log_train_loss(log_train_lossSEXP);
-    Rcpp::traits::input_parameter< const bool >::type log_test_loss(log_test_lossSEXP);
-    Rcpp::traits::input_parameter< const int >::type num_threads(num_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_als_nnmf(A, k, inv_test_size, test_seed, w, tol, epochs, verbose, L1, L2, ortho, log_train_loss, log_test_loss, num_threads));
+    Rcpp::traits::input_parameter< bool >::type log_train_loss(log_train_lossSEXP);
+    Rcpp::traits::input_parameter< bool >::type log_test_loss(log_test_lossSEXP);
+    Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_als_nnmf_dense(V, k, inv_test_size, test_seed, W, tol, epochs, verbose, L1, L2, ortho, log_train_loss, log_test_loss, num_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_als_nnmf_sparse
+Rcpp::List cpp_als_nnmf_sparse(Eigen::SparseMatrix<float> V, int k, uint32_t inv_test_size, uint32_t test_seed, Eigen::MatrixXf W, float tol, size_t epochs, bool verbose, Rcpp::NumericVector L1, Rcpp::NumericVector L2, Rcpp::NumericVector ortho, bool log_train_loss, bool log_test_loss, int num_threads);
+RcppExport SEXP _nnmf_cpp_als_nnmf_sparse(SEXP VSEXP, SEXP kSEXP, SEXP inv_test_sizeSEXP, SEXP test_seedSEXP, SEXP WSEXP, SEXP tolSEXP, SEXP epochsSEXP, SEXP verboseSEXP, SEXP L1SEXP, SEXP L2SEXP, SEXP orthoSEXP, SEXP log_train_lossSEXP, SEXP log_test_lossSEXP, SEXP num_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<float> >::type V(VSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type inv_test_size(inv_test_sizeSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type test_seed(test_seedSEXP);
+    Rcpp::traits::input_parameter< Eigen::MatrixXf >::type W(WSEXP);
+    Rcpp::traits::input_parameter< float >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< size_t >::type epochs(epochsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type L1(L1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type L2(L2SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ortho(orthoSEXP);
+    Rcpp::traits::input_parameter< bool >::type log_train_loss(log_train_lossSEXP);
+    Rcpp::traits::input_parameter< bool >::type log_test_loss(log_test_lossSEXP);
+    Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_als_nnmf_sparse(V, k, inv_test_size, test_seed, W, tol, epochs, verbose, L1, L2, ortho, log_train_loss, log_test_loss, num_threads));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_nnmf_cpp_als_nnmf", (DL_FUNC) &_nnmf_cpp_als_nnmf, 14},
+    {"_nnmf_cpp_als_nnmf_dense", (DL_FUNC) &_nnmf_cpp_als_nnmf_dense, 14},
+    {"_nnmf_cpp_als_nnmf_sparse", (DL_FUNC) &_nnmf_cpp_als_nnmf_sparse, 14},
     {NULL, NULL, 0}
 };
 

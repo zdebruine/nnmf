@@ -27,12 +27,19 @@
 #' @param ortho orthogonality penalty, optionally a vector of two giving penalty on c(W, H) individually
 #' @param log Parameters that are nearly free to compute will be automatically logged. In addition, you may specify any of c("test_loss", "train_loss")
 #' @param num_threads Number of threads to use for parallelization. If 0, will use all available threads.
-#' 
+#'
+#' @return A list containing:
+#'   \item{w}{The W matrix (basis vectors)}
+#'   \item{d}{A vector of scaling factors}
+#'   \item{h}{The H matrix (coefficients)}
+#'   \item{log}{A data.frame containing the logged parameters and metrics}
+#'   \item{params}{A data.frame containing the input parameters}
+#'
 #' @import RcppEigen
 #' @export
 #' @useDynLib nnmf, .registration = TRUE
 #'
-als_nnmf <- function(data, k, test_size = 0.0615, test_seed = 129, seed = 42, tol = 1e-4, epochs = 100, verbose = TRUE, L1 = c(0, 0), L2 = c(0, 0), ortho = c(0, 0), log = NULL, num_threads = 0, fast_nnls = FALSE) {
+als_nnmf <- function(data, k, test_size = 0.0615, test_seed = 129, seed = 42, tol = 1e-4, epochs = 100, verbose = TRUE, L1 = c(0, 0), L2 = c(0, 0), ortho = c(0, 0), log = NULL, num_threads = 0) {
 
       inv_test_density <- pmax(2, round(1 / test_size))
       if(is.matrix(seed)){
@@ -56,5 +63,11 @@ als_nnmf <- function(data, k, test_size = 0.0615, test_seed = 129, seed = 42, to
             stop("L1, L2, and ortho must be either a single value or a vector of two values.")
       }
 
-      cpp_als_nnmf(data, k, inv_test_density, test_seed, t(w_init), tol, epochs, verbose, L1, L2, ortho, "train_loss" %in% log, "test_loss" %in% log, num_threads)
+      is_sparse <- inherits(data, "dgCMatrix")
+      if (is_sparse) {
+        result <- .Call('_nnmf_cpp_als_nnmf_sparse', data, k, inv_test_density, test_seed, t(w_init), tol, epochs, verbose, L1, L2, ortho, "train_loss" %in% log, "test_loss" %in% log, num_threads)
+      } else {
+        result <- .Call('_nnmf_cpp_als_nnmf_dense', data, k, inv_test_density, test_seed, t(w_init), tol, epochs, verbose, L1, L2, ortho, "train_loss" %in% log, "test_loss" %in% log, num_threads)
+      }
+      return(result)
 }

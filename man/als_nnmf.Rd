@@ -17,8 +17,7 @@ als_nnmf(
   L2 = c(0, 0),
   ortho = c(0, 0),
   log = NULL,
-  num_threads = 0,
-  fast_nnls = FALSE
+  num_threads = 0
 )
 }
 \arguments{
@@ -47,6 +46,14 @@ als_nnmf(
 \item{log}{Parameters that are nearly free to compute will be automatically logged. In addition, you may specify any of c("test_loss", "train_loss")}
 
 \item{num_threads}{Number of threads to use for parallelization. If 0, will use all available threads.}
+}
+\value{
+A list containing:
+  \item{w}{The W matrix (basis vectors)}
+  \item{d}{A vector of scaling factors}
+  \item{h}{The H matrix (coefficients)}
+  \item{log}{A data.frame containing the logged parameters and metrics}
+  \item{params}{A data.frame containing the input parameters}
 }
 \description{
 This is the classical NMF algorithm implemented in-core that requires transposition of the input data.
