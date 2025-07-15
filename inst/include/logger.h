@@ -1,3 +1,6 @@
+#ifndef LOGGER_H
+#define LOGGER_H
+
 #include "nnmf.h"
 
 class Logger {
@@ -41,7 +44,15 @@ public:
     return Rcpp::DataFrame(df);
   }
 
+  float last(const std::string& name) const {
+    auto it = logs_.find(name);
+    if (it == logs_.end() || it->second.empty()) return NA_REAL;
+    return it->second.back();
+  }
+
 private:
   std::map<std::string, std::vector<float>> logs_;
   int epoch_;
 };
+
+#endif // LOGGER_H

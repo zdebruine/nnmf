@@ -25,7 +25,7 @@
 #' @param L1 L1 penalty, optionally a vector of two giving penalty on c(W, H) individually
 #' @param L2 L2 penalty, optionally a vector of two giving penalty on c(W, H) individually
 #' @param ortho orthogonality penalty, optionally a vector of two giving penalty on c(W, H) individually
-#' @param log Parameters that are nearly free to compute will be automatically logged. In addition, you may specify any of c("test_loss", "train_loss")
+#' @param log Character vector specifying which metrics to log each epoch. Options are any of c("total_loss", "ortho_loss", "sparsity", "train_loss", "test_loss"). Parameters that are nearly free to compute will be automatically logged.
 #' @param num_threads Number of threads to use for parallelization. If 0, will use all available threads.
 #'
 #' @return A list containing:
@@ -64,10 +64,15 @@ als_nnmf <- function(data, k, test_size = 0.0615, test_seed = 129, seed = 42, to
       }
 
       is_sparse <- inherits(data, "dgCMatrix")
+      log <- unique(log)
+      log_total_loss <- "total_loss" %in% log
+      log_ortho_loss <- "ortho_loss" %in% log
+      log_sparsity <- "sparsity" %in% log
+      log_test_loss <- "test_loss" %in% log
       if (is_sparse) {
-        result <- .Call('_nnmf_cpp_als_nnmf_sparse', data, k, inv_test_density, test_seed, t(w_init), tol, epochs, verbose, L1, L2, ortho, "train_loss" %in% log, "test_loss" %in% log, num_threads)
+        result <- .Call('_nnmf_cpp_als_nnmf_sparse', data, k, inv_test_density, test_seed, t(w_init), tol, epochs, verbose, L1, L2, ortho, log_total_loss, log_ortho_loss, log_test_loss, log_sparsity, num_threads)
       } else {
-        result <- .Call('_nnmf_cpp_als_nnmf_dense', data, k, inv_test_density, test_seed, t(w_init), tol, epochs, verbose, L1, L2, ortho, "train_loss" %in% log, "test_loss" %in% log, num_threads)
+        result <- .Call('_nnmf_cpp_als_nnmf_dense', data, k, inv_test_density, test_seed, t(w_init), tol, epochs, verbose, L1, L2, ortho, log_total_loss, log_ortho_loss, log_test_loss, log_sparsity, num_threads)
       }
       return(result)
 }
