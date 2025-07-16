@@ -1,7 +1,7 @@
 library(testthat)
-library(nnmf)
+library(RcppML)
 
-test_that("als_nnmf returns expected output and converges", {
+test_that("nmf returns expected output and converges", {
   set.seed(123)
   m <- 10
   n <- 8
@@ -9,7 +9,7 @@ test_that("als_nnmf returns expected output and converges", {
   A <- matrix(runif(m * n), m, n)
   w_init <- matrix(runif(m * k), m, k)
   # Use reasonable defaults for regularization and orthogonality
-  res <- als_nnmf(A, k, 0.06125, 42, 123, tol = 1e-4, epochs = 50, verbose = FALSE,
+  res <- nmf(A, k, 0.06125, tol = 1e-4, epochs = 50, verbose = FALSE,
                  L1 = c(0, 0), L2 = c(0, 0), ortho = c(0, 0), log = c("train_loss", "test_loss"),
                  num_threads = 1)
   expect_type(res, "list")
