@@ -6,93 +6,80 @@
 #include "helpers.h"
 
 /**
- * @brief Solve for H in min_{H >= 0} ||V - W H||^2 + reg, using masked cross-validation if specified.
- * 
- * Now returns the mean residual norm after fitting all columns.
+ * @brief Solve the Non-negative Least Squares (NNLS) problem for each column of H, with optional masking and regularization.
  *
- * This function solves the non-negative least squares (NNLS) problem for each column of H:
- *   min_{h_j >= 0} ||V_j - W h_j||^2 + reg
- * where V_j is the j-th column of V, and reg includes L1/L2/orthogonality penalties.
+ * This function solves for H in the following problem:
+ *   min_{H >= 0} ||V - W H||^2 + L1 * ||H||_1 + L2 * ||H||_2^2 + ortho * orthogonality_penalty(H)
  *
- * If inv_test_size > 0, a random speckled mask is applied to hold out a subset of entries for cross-validation.
- * The mask is generated using a seeded RNG, and the masked entries are excluded from the fit by subtracting their
- * contributions from the right-hand side and Gram matrix.
+ * Supports masking of zero entries, random test sets, and user-supplied mask matrices. Handles both dense and sparse matrices.
  *
- * @tparam MatrixType  Eigen dense or sparse matrix type
- * @param V            Data matrix (n x m)
- * @param W            Basis matrix (n x k)
- * @param H            Encoding matrix (k x m), to be solved
- * @param L1           L1 regularization
- * @param L2           L2 regularization
- * @param ortho_lambda Orthogonality penalty
- * @param threads      Number of OpenMP threads
- * @param inv_test_size Inverse test set density (0 = no masking)
- * @param test_seed    RNG seed for masking
- * @param mask_t       If true, mask by row; else, mask by column
+ * @tparam MatrixType         Eigen dense or sparse matrix type for V
+ * @tparam MaskMatrixType     Eigen dense or sparse matrix type for mask
+ * @tparam MaskZeroEntries    If true, mask out zero entries in V
+ * @tparam MaskTestSet        If true, apply a random test set mask for cross-validation
+ * @tparam MaskMaskMatrix     If true, apply a user-supplied mask matrix
+ * @param V                   Data matrix (n x m)
+ * @param W                   Basis matrix (n x k)
+ * @param H                   Encoding matrix (k x m), to be solved (output)
+ * @param L1                  L1 regularization parameter for H
+ * @param L2                  L2 regularization parameter for H
+ * @param ortho               Orthogonality penalty for H
+ * @param num_threads         Number of OpenMP threads to use
+ * @param TestMatrix          RandomSparseBinaryMatrix for test set masking
+ * @param MaskMatrix          User-supplied mask matrix (n x m), 1s indicate masked entries
+ *
+ * This function dispatches to different masking regimes and calls scd_ls() for each column.
  */
-template<typename MatrixType>
+template <typename MatrixType, typename MaskMatrixType, bool MaskZeroEntries, bool MaskTestSet, bool MaskMaskMatrix>
 inline void nnls(const MatrixType& V, const Eigen::MatrixXf& W,
                  Eigen::MatrixXf& H, float L1, float L2,
-                 float ortho_lambda, int threads,
-                 uint64_t inv_test_size, rng& seed, bool mask_t) {
+                 float ortho, int num_threads,
+                 const RandomSparseBinaryMatrix& TestMatrix, const MaskMatrixType& MaskMatrix) {
 
-  // --- Helper lambdas ---
-  auto adjust_b = [](Eigen::VectorXf& b, const MatrixType& V, const Eigen::MatrixXf& W, uint64_t j, const std::vector<uint64_t>& idx) {
-    if constexpr (is_sparse<MatrixType>::value) {
-      for (typename MatrixType::InnerIterator it(V, j); it; ++it) {
-        for (auto i : idx) {
-          if ((uint64_t)it.row() == i) {
-            b -= W.col(i) * it.value();
-            break;
-          }
-        }
-      }
-    } else {
-      for (auto i : idx) {
-        b -= W.col(i) * V(i, j);
-      }
-    }
-  };
+  constexpr int mask_count = (MaskZeroEntries ? 1 : 0) + (MaskTestSet ? 1 : 0) + (MaskMaskMatrix ? 1 : 0);
 
-  auto adjust_G = [](const Eigen::MatrixXf& G, const Eigen::MatrixXf& W, const std::vector<uint64_t>& idx) -> Eigen::MatrixXf {
-    if (idx.empty()) return G;
-    Eigen::MatrixXf wsub(W.rows(), idx.size());
-    for (size_t s = 0; s < idx.size(); ++s) {
-      wsub.col(static_cast<Eigen::Index>(s)) = W.col(idx[s]);
-    }
-    return G - XXt(wsub);
-  };
+  // Precompute Gram matrix for W
+  Eigen::MatrixXf Gram = XXt(W);
+  if constexpr (mask_count == 0) apply_ortho(Gram, ortho);
 
-  auto apply_ortho = [](Eigen::MatrixXf& G, float ortho_lambda) {
-    if (ortho_lambda != 0.0f) {
-      Eigen::VectorXf diag = G.diagonal();
-      G += G * ortho_lambda;
-      G.diagonal() = diag;
-    }
-  };
-
-  // --- Main logic ---
-  Eigen::MatrixXf G = XXt(W);
-  if (inv_test_size == 0) {
-    apply_ortho(G, ortho_lambda);
-  }
-
+  // Main loop: solve for each column of H
   #ifdef _OPENMP
-  #pragma omp parallel for num_threads(threads)
+  #pragma omp parallel for num_threads(num_threads)
   #endif
-  for (uint64_t j = 0; j < (uint64_t)H.cols(); ++j) {
-    Eigen::VectorXf b = W * V.col(j);
-
-    // if a test set is specified, apply masking by adjusting b and G accordingly
-    if(inv_test_size != 0){
-      auto idx = get_masked_indices(V, seed, j, inv_test_size, mask_t); // now from helpers.cpp
-      adjust_b(b, V, W, j, idx);
-      Eigen::MatrixXf G_i = adjust_G(G, W, idx);
-      apply_ortho(G_i, ortho_lambda);
-      scd_ls(G_i, b, H, j, L1, L2);
-    } else {
-      scd_ls(G, b, H, j, L1, L2);
+  for (uint64_t col = 0; col < static_cast<uint64_t>(H.cols()); ++col) {
+    Eigen::VectorXf rhs;
+    if constexpr (mask_count == 0) {
+      // No masking: standard NNLS
+      rhs = W * V.col(col);
+      scd_ls(Gram, rhs, H, col, L1, L2);
+      continue;
     }
+
+    // Compute mask vector for this column (1 = masked, 0 = unmasked)
+    Eigen::MatrixXf Gram_col;
+    Eigen::VectorXf mask_vec = compute_mask_vector<MatrixType, MaskMatrixType, MaskZeroEntries, MaskTestSet, MaskMaskMatrix>(V, col, TestMatrix, MaskMatrix);
+    float frac_masked = (mask_vec.array() > 0).count() / static_cast<float>(mask_vec.size());
+
+    // Branch on masking regime
+    if (frac_masked == 0.0f) {
+      // --- No masking for this column ---
+      rhs = calc_rhs(V, W, col);
+      Gram_col = Gram;
+    } else if (frac_masked < SPARSE_OPTIMIZATION_THRESHOLD_FOR_MASKING) {
+      // --- Light masking: exclude a small fraction of entries ---
+      rhs = calc_rhs(V, W, col);
+      apply_masked_rhs_update<MatrixType, false>(rhs, V, W, col, mask_vec, 1.0f); // mask_vec == 1: subtract
+      Eigen::MatrixXf masked_cols = select_columns(W, mask_vec, 1.0f);
+      Gram_col = Gram - XXt(masked_cols);
+    } else {
+      // --- Heavy masking: only use unmasked entries ---
+      rhs = Eigen::VectorXf::Zero(W.rows());
+      apply_masked_rhs_update<MatrixType, true>(rhs, V, W, col, mask_vec, 0.0f); // mask_vec == 0: add
+      Eigen::MatrixXf unmasked_cols = select_columns(W, mask_vec, 0.0f);
+      Gram_col = XXt(unmasked_cols);
+    }
+    apply_ortho(Gram_col, ortho);
+    scd_ls(Gram_col, rhs, H, col, L1, L2);
   }
 }
 

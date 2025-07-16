@@ -1,6 +1,6 @@
-Package: nnmf
+Package: RcppML
 Type: Package
-Title: Non-negative Matrix Factorization
+Title: Rcpp Machine Learning Library
 Version: 0.0.1.0
 Author: Zach DeBruine
 Maintainer: Zach DeBruine <debruinz@gvsu.edu>
